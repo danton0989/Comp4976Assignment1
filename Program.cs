@@ -94,16 +94,7 @@ builder.Services.AddAuthentication(options =>
 // Register authorization services so UseAuthorization() has required services
 builder.Services.AddAuthorization();
 
-// Add CORS policy for the Blazor client during development
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowFrontend", policy =>
-    {
-        policy.WithOrigins("http://localhost:3000", "https://{frontend-app}.azurewebsites.net")
-              .AllowAnyHeader()
-              .AllowAnyMethod();
-    });
-});
+// No per-client CORS policy required after removing frontend apps; keep default policy configured above
 
 var app = builder.Build();
 
@@ -140,8 +131,7 @@ app.UseAuthorization();
 // Map controllers
 app.MapControllers();
 
-// Map fallback for Blazor client-side routing
-app.MapFallbackToFile("index.html");
+// Client apps removed: no fallback file mapping required
 
 // root already points to Swagger UI since RoutePrefix is empty
 

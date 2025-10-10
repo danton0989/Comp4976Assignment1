@@ -39,9 +39,16 @@ public class ObituaryService : IObituaryService
         return true;
     }
 
-    public async Task<List<Obituary>> GetAllAsync(int page = 1, int pageSize = 20)
+    public async Task<List<Obituary>> GetAllAsync(int page = 1, int pageSize = 20, string? search = null)
     {
-        return await _db.Obituaries
+        var query = _db.Obituaries.AsQueryable();
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var s = search.Trim().ToLowerInvariant();
+            query = query.Where(o => o.FullName.ToLower().Contains(s));
+        }
+
+        return await query
             .OrderByDescending(o => o.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)

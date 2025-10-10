@@ -18,9 +18,9 @@ public class ObituariesController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 20)
+    public async Task<IActionResult> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 20, [FromQuery] string? search = null)
     {
-        var list = await _service.GetAllAsync(page, pageSize);
+        var list = await _service.GetAllAsync(page, pageSize, search);
         return Ok(list);
     }
 

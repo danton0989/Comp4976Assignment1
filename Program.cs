@@ -109,6 +109,11 @@ using (var scope = app.Services.CreateScope())
 }
 
 // Configure the HTTP request pipeline.
+
+// Enable CORS using the default policy (AllowAnyOrigin/AnyHeader/AnyMethod)
+// This must be called before Swagger and other middleware that might generate responses
+app.UseCors();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -118,10 +123,6 @@ if (app.Environment.IsDevelopment())
         options.RoutePrefix = "swagger";
     });
 }
-
-// Enable CORS using the default policy (AllowAnyOrigin/AnyHeader/AnyMethod)
-// This must be called before other middleware that might generate responses
-app.UseCors();
 
 app.UseHttpsRedirection();
 // Serve static files (for uploaded images)
@@ -135,7 +136,5 @@ app.UseAuthorization();
 app.MapControllers();
 
 // Client apps removed: no fallback file mapping required
-
-// root already points to Swagger UI since RoutePrefix is empty
 
 app.Run();

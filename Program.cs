@@ -12,9 +12,11 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddCors(options =>
 {
+    // Allow any origin/header/method to avoid CORS issues during development and simple deployments.
+    // NOTE: In production you should constrain this to the specific origins you expect.
     options.AddDefaultPolicy(policy =>
     {
-        policy.WithOrigins("https://localhost:5001", "http://localhost:3000")
+        policy.AllowAnyOrigin()
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
@@ -117,8 +119,9 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-// Enable CORS - this must be called before other middleware that might generate responses
-app.UseCors("AllowFrontend");
+// Enable CORS using the default policy (AllowAnyOrigin/AnyHeader/AnyMethod)
+// This must be called before other middleware that might generate responses
+app.UseCors();
 
 app.UseHttpsRedirection();
 // Serve static files (for uploaded images)

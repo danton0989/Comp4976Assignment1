@@ -5,6 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
+  <!-- EF packages are referenced below with version matching the SDK (9.0.9) -->
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.9" />
@@ -19,10 +20,17 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.6" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.9" />
   </ItemGroup>
 
   <ItemGroup>
     <Folder Include="Data\" />
+  </ItemGroup>
+  <!-- Exclude the Blazor client folder from the server project compilation -->
+  <ItemGroup>
+    <Compile Remove="Client\**\*.cs" />
+    <Content Remove="Client\**\*" />
+    <None Remove="Client\**\*" />
   </ItemGroup>
 
 </Project>

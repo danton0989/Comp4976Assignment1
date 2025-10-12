@@ -114,7 +114,7 @@ using (var scope = app.Services.CreateScope())
 // This must be called before Swagger and other middleware that might generate responses
 app.UseCors();
 
-if (app.Environment.IsDevelopment())
+if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
 {
     app.UseSwagger();
     app.UseSwaggerUI(options =>

@@ -1,0 +1,49 @@
+﻿@inject AuthState AuthState
+@inject AuthService AuthService
+@using Frontend.Blazor.Services
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm px-3">
+    <a class="navbar-brand" href="/">ObituaryApp</a>
+
+    <div class="collapse navbar-collapse">
+        <ul class="navbar-nav me-auto">
+            <li class="nav-item"><NavLink class="nav-link" href="/">Home</NavLink></li>
+            <li class="nav-item"><NavLink class="nav-link" href="/obituaries">Obituaries</NavLink></li>
+            <li class="nav-item">
+                <NavLink class="nav-link" href="/famous-deaths">
+                    Famous Deaths AI
+                </NavLink>
+            </li>
+            @if (AuthState.IsLoggedIn)
+            {
+                <li class="nav-item"><NavLink class="nav-link" href="/create-obituary">Create</NavLink></li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#" @onclick="Logout">Logout</a>
+                </li>
+            }
+            
+            else
+            {
+                <li class="nav-item"><NavLink class="nav-link" href="/login">Login</NavLink></li>
+            }
+        </ul>
+    </div>
+</nav>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        AuthState.OnChange += StateHasChanged;
+        AuthState.SetLoginState(await AuthService.IsLoggedInAsync());
+    }
+
+    private async Task Logout()
+    {
+        await AuthService.LogoutAsync();
+    }
+
+    public void Dispose()
+    {
+        AuthState.OnChange -= StateHasChanged;
+    }
+}

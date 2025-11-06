@@ -1,0 +1,132 @@
+@page "/register"
+@inject AuthService AuthService
+@inject NavigationManager Navigation
+@using Frontend.Blazor.Services
+@using System.ComponentModel.DataAnnotations
+
+<PageTitle>Register</PageTitle>
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-4">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h3 class="card-title text-center mb-4">Create Account</h3>
+
+                    <EditForm Model="@registerModel" OnValidSubmit="HandleRegister">
+                        <DataAnnotationsValidator />
+
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email</label>
+                            <InputText id="email" class="form-control" @bind-Value="registerModel.Email" 
+                                       type="email" placeholder="your@email.com" />
+                            <ValidationMessage For="@(() => registerModel.Email)" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="password" class="form-label">Password</label>
+                            <InputText id="password" class="form-control" @bind-Value="registerModel.Password" 
+                                       type="password" placeholder="Min 6 characters" />
+                            <ValidationMessage For="@(() => registerModel.Password)" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="confirmPassword" class="form-label">Confirm Password</label>
+                            <InputText id="confirmPassword" class="form-control" @bind-Value="registerModel.ConfirmPassword" 
+                                       type="password" placeholder="Confirm password" />
+                            <ValidationMessage For="@(() => registerModel.ConfirmPassword)" />
+                        </div>
+
+                        @if (error != null)
+                        {
+                            <div class="alert alert-danger">
+                                <i class="bi bi-exclamation-triangle"></i> @error
+                            </div>
+                        }
+
+                        @if (success)
+                        {
+                            <div class="alert alert-success">
+                                <i class="bi bi-check-circle"></i> Registration successful! You can now login.
+                            </div>
+                        }
+
+                        <button type="submit" class="btn btn-success w-100 mb-3" disabled="@loading">
+                            @if (loading)
+                            {
+                                <span class="spinner-border spinner-border-sm me-2"></span>
+                            }
+                            Register
+                        </button>
+
+                        <div class="text-center">
+                            <small class="text-muted">
+                                Already have an account? 
+                                <a href="/login">Login here</a>
+                            </small>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private RegisterModel registerModel = new();
+    private bool loading = false;
+    private bool success = false;
+    private string? error;
+
+    private async Task HandleRegister()
+    {
+        loading = true;
+        error = null;
+        success = false;
+
+        try
+        {
+            if (registerModel.Password != registerModel.ConfirmPassword)
+            {
+                error = "Passwords do not match.";
+                loading = false;
+                return;
+            }
+
+            var result = await AuthService.RegisterAsync(registerModel.Email, registerModel.Password);
+            
+            if (result)
+            {
+                success = true;
+                await Task.Delay(1500); // Show success message
+                Navigation.NavigateTo("/login");
+            }
+            else
+            {
+                error = "Registration failed. Email may already be in use.";
+            }
+        }
+        catch (Exception ex)
+        {
+            error = $"Registration failed: {ex.Message}";
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private class RegisterModel
+    {
+        [Required(ErrorMessage = "Email is required")]
+        [EmailAddress(ErrorMessage = "Invalid email address")]
+        public string Email { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Password is required")]
+        [MinLength(6, ErrorMessage = "Password must be at least 6 characters")]
+        public string Password { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Please confirm your password")]
+        public string ConfirmPassword { get; set; } = string.Empty;
+    }
+}

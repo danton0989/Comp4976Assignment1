@@ -1,0 +1,198 @@
+@page "/famous-deaths"
+@inject HttpClient Http
+@using System.Text.Json
+@using System.Text
+
+<PageTitle>Famous Deaths AI Assistant</PageTitle>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h2 class="card-title mb-3">
+                        <i class="bi bi-stars"></i> Famous Deaths AI Assistant
+                    </h2>
+                    <p class="text-muted mb-4">
+                        Ask about how famous historical figures passed away. The AI will provide information about their death.
+                    </p>
+
+                    <div class="mb-4">
+                        <label for="personName" class="form-label">Enter a famous person's name:</label>
+                        <div class="input-group">
+                            <input type="text" 
+                                   id="personName" 
+                                   class="form-control" 
+                                   @bind="personName" 
+                                   @bind:event="oninput"
+                                   @onkeypress="HandleKeyPress"
+                                   placeholder="e.g., Albert Einstein, Marilyn Monroe..."
+                                   disabled="@loading" />
+                            <button class="btn btn-primary" 
+                                    @onclick="AskAI" 
+                                    disabled="@(loading || string.IsNullOrWhiteSpace(personName))">
+                                @if (loading)
+                                {
+                                    <span class="spinner-border spinner-border-sm me-2"></span>
+                                }
+                                <i class="bi bi-send"></i> Ask AI
+                            </button>
+                        </div>
+                    </div>
+
+                    @if (loading)
+                    {
+                        <div class="alert alert-info">
+                            <div class="d-flex align-items-center">
+                                <div class="spinner-border spinner-border-sm me-2"></div>
+                                <span>AI is thinking...</span>
+                            </div>
+                        </div>
+                    }
+
+                    @if (error != null)
+                    {
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle"></i> @error
+                        </div>
+                    }
+
+                    @if (response != null && !loading)
+                    {
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                <h5 class="card-title">
+                                    <i class="bi bi-chat-dots"></i> AI Response:
+                                </h5>
+                                <div style="white-space: pre-line;">@response</div>
+                            </div>
+                        </div>
+                    }
+
+                    @if (conversationHistory.Any())
+                    {
+                        <div class="mt-4">
+                            <h5 class="mb-3">Recent Queries:</h5>
+                            <div class="list-group">
+                                @foreach (var item in conversationHistory.Take(5))
+                                {
+                                    <div class="list-group-item">
+                                        <strong>@item.Question</strong>
+                                        <p class="mb-0 mt-2 text-muted small">@TruncateText(item.Answer, 150)</p>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="alert alert-info mt-3">
+                <small>
+                    <i class="bi bi-info-circle"></i>
+                    <strong>Note:</strong> This feature uses a third-party AI API. Information is for educational purposes only.
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string personName = string.Empty;
+    private string? response;
+    private string? error;
+    private bool loading = false;
+    private List<ConversationItem> conversationHistory = new();
+
+    private async Task HandleKeyPress(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !string.IsNullOrWhiteSpace(personName))
+        {
+            await AskAI();
+        }
+    }
+
+    private async Task AskAI()
+    {
+        if (string.IsNullOrWhiteSpace(personName)) return;
+
+        loading = true;
+        error = null;
+        response = null;
+
+        try
+        {
+            // Call your own API endpoint which will proxy to HuggingFace
+            var requestBody = new { PersonName = personName };
+            
+            var httpResponse = await Http.PostAsJsonAsync("api/AIAssistant/famous-death", requestBody);
+            var content = await httpResponse.Content.ReadAsStringAsync();
+
+            if (httpResponse.IsSuccessStatusCode)
+            {
+                var result = JsonSerializer.Deserialize<AIResponse>(content, new JsonSerializerOptions 
+                { 
+                    PropertyNameCaseInsensitive = true 
+                });
+                
+                if (result != null && !string.IsNullOrEmpty(result.Response))
+                {
+                    response = result.Response;
+                    
+                    conversationHistory.Insert(0, new ConversationItem
+                    {
+                        Question = personName,
+                        Answer = response
+                    });
+                }
+                else
+                {
+                    error = "No response from AI. Please try again.";
+                }
+            }
+            else if (httpResponse.StatusCode == System.Net.HttpStatusCode.ServiceUnavailable)
+            {
+                error = "AI model is loading. Please wait 20 seconds and try again.";
+            }
+            else
+            {
+                var errorResult = JsonSerializer.Deserialize<ErrorResponse>(content, new JsonSerializerOptions 
+                { 
+                    PropertyNameCaseInsensitive = true 
+                });
+                error = errorResult?.Error ?? $"API Error: {httpResponse.StatusCode}";
+            }
+        }
+        catch (Exception ex)
+        {
+            error = $"Error: {ex.Message}";
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private string TruncateText(string text, int maxLength)
+    {
+        if (string.IsNullOrEmpty(text) || text.Length <= maxLength)
+            return text;
+        return text.Substring(0, maxLength) + "...";
+    }
+
+    private class AIResponse
+    {
+        public string Response { get; set; } = string.Empty;
+    }
+
+    private class ErrorResponse
+    {
+        public string Error { get; set; } = string.Empty;
+    }
+
+    private class ConversationItem
+    {
+        public string Question { get; set; } = string.Empty;
+        public string Answer { get; set; } = string.Empty;
+    }
+}

@@ -1,19 +1,20 @@
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using ObituaryApp.Data;
 using ObituaryApp.Services;
-using Microsoft.OpenApi.Models;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// ---------------------
+// Configure CORS
+// ---------------------
 builder.Services.AddCors(options =>
 {
-    // Allow any origin/header/method to avoid CORS issues during development and simple deployments.
-    // NOTE: In production you should constrain this to the specific origins you expect.
     options.AddDefaultPolicy(policy =>
     {
         policy.AllowAnyOrigin()
@@ -22,8 +23,12 @@ builder.Services.AddCors(options =>
     });
 });
 
+// ---------------------
+// Add Controllers + Swagger
+// ---------------------
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
+
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo
@@ -32,6 +37,7 @@ builder.Services.AddSwaggerGen(c =>
         Version = "v1",
         Description = "API for managing obituary records"
     });
+
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",
@@ -41,6 +47,7 @@ builder.Services.AddSwaggerGen(c =>
         In = ParameterLocation.Header,
         Description = "JWT Authorization header using the Bearer scheme."
     });
+
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
         {
@@ -57,18 +64,24 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// Configure EF Core + Identity with SQLite
+// ---------------------
+// Configure EF Core + Identity
+// ---------------------
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection") ?? "Data Source=obituaries.db"));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("sqldata")));
 
 builder.Services.AddIdentity<IdentityUser, IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
-// register application services
+// ---------------------
+// Register Services
+// ---------------------
 builder.Services.AddScoped<IObituaryService, ObituaryService>();
 
-// read jwt options
+// ---------------------
+// Configure JWT Authentication
+// ---------------------
 var jwtSection = builder.Configuration.GetSection("Jwt");
 var jwtKey = jwtSection["Key"] ?? throw new InvalidOperationException("Jwt:Key is not configured");
 var jwtIssuer = jwtSection["Issuer"];
@@ -76,65 +89,56 @@ var jwtAudience = jwtSection["Audience"];
 
 builder.Services.AddAuthentication(options =>
 {
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultAuthenticateScheme = "Bearer";
+    options.DefaultChallengeScheme = "Bearer";
 })
-    .AddJwtBearer(options =>
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
     {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = jwtIssuer,
-            ValidAudience = jwtAudience,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
-        };
-    });
+        ValidateIssuer = true,
+        ValidateAudience = true,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        ValidIssuer = jwtIssuer,
+        ValidAudience = jwtAudience,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+    };
+});
 
-// Register authorization services so UseAuthorization() has required services
+builder.Services.AddHttpClient();
 builder.Services.AddAuthorization();
 
-// No per-client CORS policy required after removing frontend apps; keep default policy configured above
-
+// ---------------------
+// Build and Configure App
+// ---------------------
 var app = builder.Build();
 
-// Ensure DB is created and seed users/roles
+// Ensure the database is created/seeded
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
     var db = services.GetRequiredService<ApplicationDbContext>();
-    DbInitializer.InitializeAsync(services).GetAwaiter().GetResult();
+    db.Database.EnsureCreated();
 }
 
-// Configure the HTTP request pipeline.
-
-// Enable CORS using the default policy (AllowAnyOrigin/AnyHeader/AnyMethod)
-// This must be called before Swagger and other middleware that might generate responses
+// ---------------------
+// Middleware pipeline
+// ---------------------
 app.UseCors();
 
-if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
+if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI(options =>
-    {
-        options.SwaggerEndpoint("/swagger/v1/swagger.json", "Obituary API v1");
-        options.RoutePrefix = "swagger";
-    });
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
-// Serve static files (for uploaded images)
 app.UseStaticFiles();
 
-// Add authentication and authorization middleware
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Map controllers
 app.MapControllers();
-
-// Client apps removed: no fallback file mapping required
 
 app.Run();

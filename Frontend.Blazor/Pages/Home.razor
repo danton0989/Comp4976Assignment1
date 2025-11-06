@@ -1,0 +1,74 @@
+﻿@page "/"
+@inject NavigationManager Navigation
+
+<PageTitle>Home - ObituaryApp</PageTitle>
+
+<div class="container mt-5">
+    <div class="text-center mb-5">
+        <h1 class="display-4 mb-3">Welcome to ObituaryApp</h1>
+        <p class="lead text-muted">
+            Honor and remember the lives of loved ones with dignity and grace.
+        </p>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="bi bi-book fs-1 text-primary"></i>
+                    </div>
+                    <h5 class="card-title">Browse Obituaries</h5>
+                    <p class="card-text text-muted">
+                        Read and search through memorial tributes.
+                    </p>
+                    <button class="btn btn-primary" @onclick='() => Navigation.NavigateTo("/obituaries")'>
+                        View All
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="bi bi-pencil-square fs-1 text-success"></i>
+                    </div>
+                    <h5 class="card-title">Create Memorial</h5>
+                    <p class="card-text text-muted">
+                        Share memories and celebrate a life well-lived.
+                    </p>
+                    <button class="btn btn-success" @onclick='() => Navigation.NavigateTo("/create-obituary")'>
+                        Create New
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="bi bi-search fs-1 text-info"></i>
+                    </div>
+                    <h5 class="card-title">Search</h5>
+                    <p class="card-text text-muted">
+                        Find specific obituaries by name or keyword.
+                    </p>
+                    <button class="btn btn-info" @onclick='() => Navigation.NavigateTo("/obituaries")'>
+                        Search Now
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="alert alert-light border text-center">
+        <h5 class="mb-3">About ObituaryApp</h5>
+        <p class="mb-0">
+            ObituaryApp provides a respectful digital space to commemorate loved ones. 
+            Share stories, preserve memories, and celebrate the impact of those who have passed.
+        </p>
+    </div>
+</div>

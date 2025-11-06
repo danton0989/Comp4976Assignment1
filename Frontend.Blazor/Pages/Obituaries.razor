@@ -1,0 +1,165 @@
+@page "/obituaries"
+@inject ObituaryService ObituaryService
+@inject NavigationManager Navigation
+@using Frontend.Blazor.Services
+@using Frontend.Blazor.Models
+
+<PageTitle>Obituaries</PageTitle>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Obituaries</h2>
+    </div>
+
+    <div class="mb-4">
+        <div class="input-group">
+            <input type="text" class="form-control" placeholder="Search by name..." 
+                   @bind="searchQuery" @bind:event="oninput" />
+            <button class="btn btn-primary" @onclick="SearchAsync">
+                <i class="bi bi-search"></i> Search
+            </button>
+            @if (!string.IsNullOrWhiteSpace(searchQuery))
+            {
+                <button class="btn btn-outline-secondary" @onclick="ClearSearch">
+                    Clear
+                </button>
+            }
+        </div>
+    </div>
+
+    @if (loading)
+    {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2 text-muted">Loading obituaries...</p>
+        </div>
+    }
+    else if (error != null)
+    {
+        <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle"></i> @error
+        </div>
+    }
+    else if (obituaries == null || !obituaries.Any())
+    {
+        <div class="alert alert-info text-center">
+            <i class="bi bi-info-circle"></i> No obituaries found.
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+            @foreach (var obit in obituaries)
+            {
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100 shadow-sm obituary-card" @onclick="() => ViewDetails(obit.Id)">
+                        @if (!string.IsNullOrEmpty(obit.PhotoUrl))
+                        {
+                            <img src="@obit.PhotoUrl" class="card-img-top obituary-photo" alt="@obit.FullName" />
+                        }
+                        else
+                        {
+                            <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                                <i class="bi bi-person-circle fs-1 text-muted"></i>
+                            </div>
+                        }
+                        <div class="card-body">
+                            <h5 class="card-title">@obit.FullName</h5>
+                            <p class="text-muted mb-2">
+                                <small>
+                                    @obit.DateOfBirth.ToString("MMM d, yyyy") - @obit.DateOfDeath.ToString("MMM d, yyyy")
+                                </small>
+                            </p>
+                            <p class="card-text">
+                                @(obit.Biography.Length > 100 ? obit.Biography.Substring(0, 100) + "..." : obit.Biography)
+                            </p>
+                        </div>
+                        <div class="card-footer bg-transparent">
+                            <small class="text-muted">
+                                <i class="bi bi-calendar"></i> Created @obit.CreatedAt.ToString("MMM d, yyyy")
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+<style>
+    .obituary-card {
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .obituary-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    }
+
+    .obituary-photo {
+        height: 200px;
+        object-fit: cover;
+    }
+</style>
+
+@code {
+    private List<Obituary>? obituaries;
+    private bool loading = true;
+    private string? error;
+    private string searchQuery = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadObituariesAsync();
+    }
+
+    private async Task LoadObituariesAsync()
+    {
+        loading = true;
+        error = null;
+        try
+        {
+            obituaries = await ObituaryService.GetAllAsync();
+        }
+        catch (Exception ex)
+        {
+            error = $"Failed to load obituaries: {ex.Message}";
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private async Task SearchAsync()
+    {
+        loading = true;
+        error = null;
+        try
+        {
+            obituaries = await ObituaryService.GetAllAsync(searchQuery);
+        }
+        catch (Exception ex)
+        {
+            error = $"Search failed: {ex.Message}";
+        }
+        finally
+        {
+            loading = false;
+        }
+    }
+
+    private async Task ClearSearch()
+    {
+        searchQuery = string.Empty;
+        await LoadObituariesAsync();
+    }
+
+    private void ViewDetails(int id)
+    {
+        Navigation.NavigateTo($"/obituaries/{id}");
+    }
+}

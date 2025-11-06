@@ -1,0 +1,161 @@
+@page "/create-obituary"
+@inject ObituaryService ObituaryService
+@inject NavigationManager Navigation
+@inject AuthState AuthState
+@using Frontend.Blazor.Services
+@using Frontend.Blazor.Models
+@using Microsoft.AspNetCore.Components.Forms
+
+<PageTitle>Create Obituary</PageTitle>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-8 mx-auto">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h2 class="card-title mb-4">Create New Obituary</h2>
+
+                    @if (!AuthState.IsLoggedIn)
+                    {
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i> 
+                            You must be logged in to create an obituary.
+                            <a href="/login" class="alert-link">Login here</a>
+                        </div>
+                    }
+                    else
+                    {
+                        <EditForm Model="@model" OnValidSubmit="HandleSubmit">
+                            <DataAnnotationsValidator />
+                            <ValidationSummary class="alert alert-danger" />
+
+                            <div class="mb-3">
+                                <label for="fullName" class="form-label">Full Name *</label>
+                                <InputText id="fullName" class="form-control" @bind-Value="model.FullName" />
+                                <ValidationMessage For="@(() => model.FullName)" />
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="dateOfBirth" class="form-label">Date of Birth *</label>
+                                    <InputDate id="dateOfBirth" class="form-control" @bind-Value="model.DateOfBirth" />
+                                    <ValidationMessage For="@(() => model.DateOfBirth)" />
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label for="dateOfDeath" class="form-label">Date of Death *</label>
+                                    <InputDate id="dateOfDeath" class="form-control" @bind-Value="model.DateOfDeath" />
+                                    <ValidationMessage For="@(() => model.DateOfDeath)" />
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="biography" class="form-label">Biography *</label>
+                                <InputTextArea id="biography" class="form-control" rows="8" @bind-Value="model.Biography" 
+                                               placeholder="Share memories, achievements, and the story of their life..." />
+                                <ValidationMessage For="@(() => model.Biography)" />
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="photo" class="form-label">Photo (optional)</label>
+                                <InputFile id="photo" class="form-control" OnChange="HandlePhotoSelected" accept="image/*" />
+                                <small class="form-text text-muted">Max file size: 5MB</small>
+                                
+                                @if (photoPreview != null)
+                                {
+                                    <div class="mt-2">
+                                        <img src="@photoPreview" alt="Preview" class="img-thumbnail" style="max-height: 200px;" />
+                                    </div>
+                                }
+                            </div>
+
+                            @if (error != null)
+                            {
+                                <div class="alert alert-danger">
+                                    <i class="bi bi-exclamation-triangle"></i> @error
+                                </div>
+                            }
+
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary" disabled="@submitting">
+                                    @if (submitting)
+                                    {
+                                        <span class="spinner-border spinner-border-sm me-2"></span>
+                                    }
+                                    <i class="bi bi-check-circle"></i> Create Obituary
+                                </button>
+                                <button type="button" class="btn btn-secondary" @onclick='() => Navigation.NavigateTo("/obituaries")'>
+                                    Cancel
+                                </button>
+                            </div>
+                        </EditForm>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private ObituaryCreateDto model = new();
+    private bool submitting = false;
+    private string? error;
+    private string? photoPreview;
+
+    protected override void OnInitialized()
+    {
+        if (!AuthState.IsLoggedIn)
+        {
+            Navigation.NavigateTo("/login");
+        }
+    }
+
+    private async Task HandlePhotoSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file != null)
+        {
+            if (file.Size > 5_000_000)
+            {
+                error = "File size must be less than 5MB";
+                return;
+            }
+
+            model.PhotoFile = file;
+
+            // Generate preview
+            var buffer = new byte[file.Size];
+            await file.OpenReadStream(5_000_000).ReadAsync(buffer);
+            var imageType = file.ContentType;
+            photoPreview = $"data:{imageType};base64,{Convert.ToBase64String(buffer)}";
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        submitting = true;
+        error = null;
+
+        try
+        {
+            var success = await ObituaryService.CreateAsync(model);
+            
+            if (success)
+            {
+                Navigation.NavigateTo("/obituaries");
+            }
+            else
+            {
+                error = "Failed to create obituary. Please try again.";
+            }
+        }
+        catch (Exception ex)
+        {
+            error = $"An error occurred: {ex.Message}";
+        }
+        finally
+        {
+            submitting = false;
+        }
+    }
+}

@@ -1,5 +1,6 @@
 @page "/famous-deaths"
 @inject HttpClient Http
+@inject ILogger<FamousDeaths> Logger
 @using System.Text.Json
 @using System.Text
 
@@ -124,10 +125,13 @@
         {
             // Call your own API endpoint which will proxy to HuggingFace
             var requestBody = new { PersonName = personName };
-            
+                    
+        Logger.LogInformation($"HttpClient BaseAddress: {Http.BaseAddress}");
+        Logger.LogInformation($"Calling API with person: {personName}");
             var httpResponse = await Http.PostAsJsonAsync("api/AIAssistant/famous-death", requestBody);
             var content = await httpResponse.Content.ReadAsStringAsync();
-
+        Logger.LogInformation($"Response Status: {httpResponse.StatusCode}");
+        Logger.LogInformation($"Response Content: {content}");
             if (httpResponse.IsSuccessStatusCode)
             {
                 var result = JsonSerializer.Deserialize<AIResponse>(content, new JsonSerializerOptions 

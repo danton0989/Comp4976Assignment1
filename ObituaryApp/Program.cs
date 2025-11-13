@@ -6,9 +6,10 @@ using ObituaryApp.Data;
 using ObituaryApp.Services;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-
+// using DotNetEnv;
 
 var builder = WebApplication.CreateBuilder(args);
+// Env.Load();
 
 // ---------------------
 // Configure CORS
@@ -18,7 +19,7 @@ builder.Services.AddCors(options =>
     options.AddDefaultPolicy(policy =>
     {
         policy.AllowAnyOrigin()
-              .AllowAnyHeader()
+        .AllowAnyHeader()
               .AllowAnyMethod();
     });
 });
@@ -108,7 +109,7 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddHttpClient();
 builder.Services.AddAuthorization();
-
+// builder.Configuration.AddEnvironmentVariables();
 // ---------------------
 // Build and Configure App
 // ---------------------

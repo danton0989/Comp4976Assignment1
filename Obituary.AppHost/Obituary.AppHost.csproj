@@ -7,6 +7,7 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <IsTransformWebConfigDisabled>true</IsTransformWebConfigDisabled>
     <UserSecretsId>3ae51963-96ca-41a7-9c23-d6204973689f</UserSecretsId>
   </PropertyGroup>
 

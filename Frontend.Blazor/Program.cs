@@ -10,12 +10,12 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-var apiBaseUrl = builder.Configuration["ApiBaseUrl"] ?? "https://comp4976assignment1backend.azurewebsites.net";
+// var apiBaseUrl = builder.Configuration["ApiBaseUrl"] ?? "https://comp4976assignment1backend.azurewebsites.net";
 
 // Configure HttpClient
 builder.Services.AddScoped(sp => new HttpClient 
 { 
-    BaseAddress = new Uri(apiBaseUrl) 
+    BaseAddress = new Uri("https://comp4976assignment1backend.azurewebsites.net") 
 });
 
 builder.Services.AddBlazoredLocalStorage();

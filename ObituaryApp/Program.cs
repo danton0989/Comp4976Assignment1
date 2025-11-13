@@ -6,140 +6,207 @@ using ObituaryApp.Data;
 using ObituaryApp.Services;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-// using DotNetEnv;
 
-var builder = WebApplication.CreateBuilder(args);
-// Env.Load();
-
-// ---------------------
-// Configure CORS
-// ---------------------
-builder.Services.AddCors(options =>
+try
 {
-    options.AddDefaultPolicy(policy =>
-    {
-        policy.AllowAnyOrigin()
-        .AllowAnyHeader()
-              .AllowAnyMethod();
-    });
-});
+    Console.WriteLine("=== STARTING OBITUARY APP ===");
+    
+    var builder = WebApplication.CreateBuilder(args);
 
-// ---------------------
-// Add Controllers + Swagger
-// ---------------------
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
-
-builder.Services.AddSwaggerGen(c =>
-{
-    c.SwaggerDoc("v1", new OpenApiInfo
+    Console.WriteLine("=== CONFIGURING CORS ===");
+    builder.Services.AddCors(options =>
     {
-        Title = "Obituary API",
-        Version = "v1",
-        Description = "API for managing obituary records"
-    });
-
-    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-    {
-        Name = "Authorization",
-        Type = SecuritySchemeType.ApiKey,
-        Scheme = "Bearer",
-        BearerFormat = "JWT",
-        In = ParameterLocation.Header,
-        Description = "JWT Authorization header using the Bearer scheme."
-    });
-
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement
-    {
+        options.AddDefaultPolicy(policy =>
         {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            new string[] {}
-        }
+            policy.AllowAnyOrigin()
+            .AllowAnyHeader()
+                  .AllowAnyMethod();
+        });
     });
-});
 
-// ---------------------
-// Configure EF Core + Identity
-// ---------------------
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("sqldata")));
+    Console.WriteLine("=== ADDING CONTROLLERS ===");
+    builder.Services.AddControllers();
+    builder.Services.AddEndpointsApiExplorer();
 
-builder.Services.AddIdentity<IdentityUser, IdentityRole>()
-    .AddEntityFrameworkStores<ApplicationDbContext>()
-    .AddDefaultTokenProviders();
-
-// ---------------------
-// Register Services
-// ---------------------
-builder.Services.AddScoped<IObituaryService, ObituaryService>();
-
-// ---------------------
-// Configure JWT Authentication
-// ---------------------
-var jwtSection = builder.Configuration.GetSection("Jwt");
-var jwtKey = jwtSection["Key"] ?? throw new InvalidOperationException("Jwt:Key is not configured");
-var jwtIssuer = jwtSection["Issuer"];
-var jwtAudience = jwtSection["Audience"];
-
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = "Bearer";
-    options.DefaultChallengeScheme = "Bearer";
-})
-.AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
+    Console.WriteLine("=== CONFIGURING SWAGGER ===");
+    builder.Services.AddSwaggerGen(c =>
     {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = jwtIssuer,
-        ValidAudience = jwtAudience,
-        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
-    };
-});
+        c.SwaggerDoc("v1", new OpenApiInfo
+        {
+            Title = "Obituary API",
+            Version = "v1",
+            Description = "API for managing obituary records"
+        });
 
-builder.Services.AddHttpClient();
-builder.Services.AddAuthorization();
-// builder.Configuration.AddEnvironmentVariables();
-// ---------------------
-// Build and Configure App
-// ---------------------
+        c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+        {
+            Name = "Authorization",
+            Type = SecuritySchemeType.ApiKey,
+            Scheme = "Bearer",
+            BearerFormat = "JWT",
+            In = ParameterLocation.Header,
+            Description = "JWT Authorization header using the Bearer scheme."
+        });
+
+        c.AddSecurityRequirement(new OpenApiSecurityRequirement
+        {
+            {
+                new OpenApiSecurityScheme
+                {
+                    Reference = new OpenApiReference
+                    {
+                        Type = ReferenceType.SecurityScheme,
+                        Id = "Bearer"
+                    }
+                },
+                new string[] {}
+            }
+        });
+    });
+
+  Console.WriteLine("=== CONFIGURING DATABASE ===");
+var connectionString = builder.Configuration.GetConnectionString("sqldata");
+Console.WriteLine($"Connection String: {(string.IsNullOrEmpty(connectionString) ? "MISSING" : "Found")}");
+
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlServer(connectionString, sqlOptions =>
+    {
+        sqlOptions.EnableRetryOnFailure(
+            maxRetryCount: 5,
+            maxRetryDelay: TimeSpan.FromSeconds(30),
+            errorNumbersToAdd: null);
+        sqlOptions.CommandTimeout(60); // Increase timeout
+    }));
+
+    Console.WriteLine("=== CONFIGURING IDENTITY ===");
+    builder.Services.AddIdentity<IdentityUser, IdentityRole>()
+        .AddEntityFrameworkStores<ApplicationDbContext>()
+        .AddDefaultTokenProviders();
+
+    Console.WriteLine("=== REGISTERING SERVICES ===");
+    builder.Services.AddScoped<IObituaryService, ObituaryService>();
+
+    Console.WriteLine("=== CONFIGURING JWT ===");
+    var jwtSection = builder.Configuration.GetSection("Jwt");
+    var jwtKey = jwtSection["Key"];
+    var jwtIssuer = jwtSection["Issuer"];
+    var jwtAudience = jwtSection["Audience"];
+    
+    Console.WriteLine($"JWT Key: {(string.IsNullOrEmpty(jwtKey) ? "MISSING" : "Found")}");
+    Console.WriteLine($"JWT Issuer: {jwtIssuer ?? "MISSING"}");
+    Console.WriteLine($"JWT Audience: {jwtAudience ?? "MISSING"}");
+    
+    if (string.IsNullOrEmpty(jwtKey))
+    {
+        throw new InvalidOperationException("Jwt:Key is not configured in appsettings.json");
+    }
+
+    builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = "Bearer";
+        options.DefaultChallengeScheme = "Bearer";
+    })
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = jwtIssuer,
+            ValidAudience = jwtAudience,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+        };
+    });
+
+    Console.WriteLine("=== ADDING HTTP CLIENT ===");
+    builder.Services.AddHttpClient();
+    builder.Services.AddAuthorization();
+
+Console.WriteLine("=== BUILDING APP ===");
 var app = builder.Build();
 
-// Ensure the database is created/seeded
-using (var scope = app.Services.CreateScope())
+Console.WriteLine("=== ENSURING DATABASE CREATED ===");
+var maxAttempts = 10;
+var attempt = 0;
+var connected = false;
+
+while (attempt < maxAttempts && !connected)
 {
-    var services = scope.ServiceProvider;
-    var db = services.GetRequiredService<ApplicationDbContext>();
-    db.Database.EnsureCreated();
+    attempt++;
+    try
+    {
+        Console.WriteLine($"Database connection attempt {attempt}/{maxAttempts}...");
+        
+        using (var scope = app.Services.CreateScope())
+        {
+            var services = scope.ServiceProvider;
+            var db = services.GetRequiredService<ApplicationDbContext>();
+            
+            var connString = db.Database.GetConnectionString();
+            Console.WriteLine($"Using connection string: {connString}");
+            
+            // Test connection first
+            await db.Database.CanConnectAsync();
+            Console.WriteLine("✓ Connection successful!");
+            
+            // Apply migrations instead of EnsureCreated
+            Console.WriteLine("Applying migrations...");
+            await db.Database.MigrateAsync();
+            Console.WriteLine("✓ Migrations applied!");
+            
+            // Seed data
+            Console.WriteLine("Running database seeder...");
+            await DbInitializer.InitializeAsync(services);
+            Console.WriteLine("✓ Seeding complete!");
+            
+            connected = true;
+        }
+    }
+    catch (Exception dbEx)
+    {
+        Console.WriteLine($"❌ Attempt {attempt} failed: {dbEx.Message}");
+        
+        if (attempt < maxAttempts)
+        {
+            var delay = attempt * 2;
+            Console.WriteLine($"Waiting {delay} seconds before retry...");
+            await Task.Delay(TimeSpan.FromSeconds(delay));
+        }
+        else
+        {
+            Console.WriteLine("⚠️ Could not connect to database after all attempts");
+            Console.WriteLine("The app will start, but database operations won't work");
+        }
+    }
 }
+Console.WriteLine("=== CONFIGURING MIDDLEWARE ===");
+    app.UseCors();
 
-// ---------------------
-// Middleware pipeline
-// ---------------------
-app.UseCors();
+    if (app.Environment.IsDevelopment())
+    {
+        app.UseSwagger();
+        app.UseSwaggerUI();
+    }
 
-if (app.Environment.IsDevelopment())
+    app.UseHttpsRedirection();
+    app.UseStaticFiles();
+
+    app.UseAuthentication();
+    app.UseAuthorization();
+
+    app.MapControllers();
+
+    Console.WriteLine("=== STARTING APP ===");
+    app.Run();
+}
+catch (Exception ex)
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    Console.WriteLine("=== FATAL STARTUP ERROR ===");
+    Console.WriteLine($"Exception Type: {ex.GetType().Name}");
+    Console.WriteLine($"Message: {ex.Message}");
+    Console.WriteLine($"Inner Exception: {ex.InnerException?.Message}");
+    Console.WriteLine($"Stack Trace: {ex.StackTrace}");
+    throw;
 }
-
-app.UseHttpsRedirection();
-app.UseStaticFiles();
-
-app.UseAuthentication();
-app.UseAuthorization();
-
-app.MapControllers();
-
-app.Run();

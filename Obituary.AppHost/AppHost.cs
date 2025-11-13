@@ -15,8 +15,9 @@ namespace Obituary.AppHost
 
             var api = builder.AddProject<Projects.ObituaryApp>("obituaryapi")
                 .WithReference(sqlServer)
+                .WaitFor(sqlServer);
                 // .WithEnvironment("GOOGLE_API_KEY", "AIzaSyA6_zAz4iWS565Z5QwATQOftExevOxO8gY")
-                ;
+                
 
             var frontend = builder.AddProject<Projects.Frontend_Blazor>("frontend")
                 .WithReference(api);

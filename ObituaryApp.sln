@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.2.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ObituaryApp", "ObituaryApp.csproj", "{55D9D573-8677-878E-D5BB-4A2E8D71D75A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ObituaryApp", "ObituaryApp\ObituaryApp.csproj", "{55D9D573-8677-878E-D5BB-4A2E8D71D75A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Frontend.Blazor", "Frontend.Blazor\Frontend.Blazor.csproj", "{B7C04B55-07DE-45D6-8CE1-A97B19321B88}"
 EndProject

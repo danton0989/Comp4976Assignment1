@@ -22,10 +22,10 @@ jobs:
           dotnet-version: '9.x'
 
       - name: Restore dependencies
-        run: dotnet restore ./Obituary.sln
+        run: dotnet restore ./ObituaryApp.sln
 
       - name: Build solution
-        run: dotnet build ./Obituary.sln --configuration Release --no-restore
+        run: dotnet build ./ObituaryApp.sln --configuration Release --no-restore
 
       - name: Publish AppHost project
         run: dotnet publish ./Obituary.AppHost/Obituary.AppHost.csproj -c Release -o ./publish_output --no-build

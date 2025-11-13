@@ -15,23 +15,18 @@
                         <i class="bi bi-stars"></i> Famous Deaths AI Assistant
                     </h2>
                     <p class="text-muted mb-4">
-                        Ask about how famous historical figures passed away. The AI will provide information about their death.
+                        Ask about how famous historical figures passed away. The AI will provide information about their
+                        death.
                     </p>
 
                     <div class="mb-4">
                         <label for="personName" class="form-label">Enter a famous person's name:</label>
                         <div class="input-group">
-                            <input type="text" 
-                                   id="personName" 
-                                   class="form-control" 
-                                   @bind="personName" 
-                                   @bind:event="oninput"
-                                   @onkeypress="HandleKeyPress"
-                                   placeholder="e.g., Albert Einstein, Marilyn Monroe..."
-                                   disabled="@loading" />
-                            <button class="btn btn-primary" 
-                                    @onclick="AskAI" 
-                                    disabled="@(loading || string.IsNullOrWhiteSpace(personName))">
+                            <input type="text" id="personName" class="form-control" @bind="personName"
+                                @bind:event="oninput" @onkeypress="HandleKeyPress"
+                                placeholder="e.g., Albert Einstein, Marilyn Monroe..." disabled="@loading" />
+                            <button class="btn btn-primary" @onclick="AskAI"
+                                disabled="@(loading || string.IsNullOrWhiteSpace(personName))">
                                 @if (loading)
                                 {
                                     <span class="spinner-border spinner-border-sm me-2"></span>
@@ -91,7 +86,8 @@
             <div class="alert alert-info mt-3">
                 <small>
                     <i class="bi bi-info-circle"></i>
-                    <strong>Note:</strong> This feature uses a third-party AI API. Information is for educational purposes only.
+                    <strong>Note:</strong> This feature uses a third-party AI API. Information is for educational
+                    purposes only.
                 </small>
             </div>
         </div>
@@ -113,70 +109,79 @@
         }
     }
 
-
 private async Task AskAI()
 {
     if (string.IsNullOrWhiteSpace(personName)) return;
+
     loading = true;
     error = null;
     response = null;
-        response = null;
 
-        try
+    try
+    {
+        var apiKey = "AIzaSyA6_zAz4iWS565Z5QwATQOftExevOxO8gY";
+        var apiUrl = $"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={apiKey}";
+
+        var prompt = $"Provide a brief, factual summary of how {personName} died, including the date, location, and cause of death. Keep it concise and respectful.";
+
+        var requestBody = new
         {
-            // Call your own API endpoint which will proxy to HuggingFace
-            var requestBody = new { PersonName = personName };
-                    
-        Logger.LogInformation($"HttpClient BaseAddress: {Http.BaseAddress}");
-        Logger.LogInformation($"Calling API with person: {personName}");
-            var httpResponse = await Http.PostAsJsonAsync("api/AIAssistant/famous-death", requestBody);
-            var content = await httpResponse.Content.ReadAsStringAsync();
-        Logger.LogInformation($"Response Status: {httpResponse.StatusCode}");
-        Logger.LogInformation($"Response Content: {content}");
-            if (httpResponse.IsSuccessStatusCode)
+            contents = new[]
             {
-                var result = JsonSerializer.Deserialize<AIResponse>(content, new JsonSerializerOptions 
-                { 
-                    PropertyNameCaseInsensitive = true 
-                });
-                
-                if (result != null && !string.IsNullOrEmpty(result.Response))
+                new
                 {
-                    response = result.Response;
-                    
-                    conversationHistory.Insert(0, new ConversationItem
+                    parts = new[]
                     {
-                        Question = personName,
-                        Answer = response
-                    });
-                }
-                else
-                {
-                    error = "No response from AI. Please try again.";
+                        new { text = prompt }
+                    }
                 }
             }
-            else if (httpResponse.StatusCode == System.Net.HttpStatusCode.ServiceUnavailable)
-            {
-                error = "AI model is loading. Please wait 20 seconds and try again.";
-            }
-            else
-            {
-                var errorResult = JsonSerializer.Deserialize<ErrorResponse>(content, new JsonSerializerOptions 
-                { 
-                    PropertyNameCaseInsensitive = true 
-                });
-                error = errorResult?.Error ?? $"API Error: {httpResponse.StatusCode}";
-            }
-        }
-        catch (Exception ex)
+        };
+
+        var json = JsonSerializer.Serialize(requestBody);
+        
+        // Create a new HttpClient with explicit handler
+        using var httpClient = new HttpClient();
+        var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+        var httpResponse = await httpClient.PostAsync(apiUrl, content);
+        var responseContent = await httpResponse.Content.ReadAsStringAsync();
+
+        if (httpResponse.IsSuccessStatusCode)
         {
-            error = $"Error: {ex.Message}";
+            using var doc = JsonDocument.Parse(responseContent);
+
+            var modelResponse = doc
+                .RootElement
+                .GetProperty("candidates")[0]
+                .GetProperty("content")
+                .GetProperty("parts")[0]
+                .GetProperty("text")
+                .GetString();
+
+            response = modelResponse ?? "No response received from Gemini.";
+
+            conversationHistory.Insert(0, new ConversationItem
+            {
+                Question = personName,
+                Answer = response
+            });
         }
-        finally
+        else
         {
-            loading = false;
+            error = $"API Error: {httpResponse.StatusCode} - {responseContent}";
         }
     }
+    catch (Exception ex)
+    {
+        error = $"Error: {ex.Message}";
+    }
+    finally
+    {
+        loading = false;
+    }
+}
+
 
     private string TruncateText(string text, int maxLength)
     {

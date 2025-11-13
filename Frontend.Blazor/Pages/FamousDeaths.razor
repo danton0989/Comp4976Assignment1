@@ -113,12 +113,13 @@
         }
     }
 
-    private async Task AskAI()
-    {
-        if (string.IsNullOrWhiteSpace(personName)) return;
 
-        loading = true;
-        error = null;
+private async Task AskAI()
+{
+    if (string.IsNullOrWhiteSpace(personName)) return;
+    loading = true;
+    error = null;
+    response = null;
         response = null;
 
         try

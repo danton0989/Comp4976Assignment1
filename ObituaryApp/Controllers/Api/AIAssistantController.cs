@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Text;
 using System.Text.Json;
 
-namespace ObituaryApp.Controllers;
+namespace ObituaryApp.Controllers.Api;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -87,7 +87,7 @@ public class AIAssistantController : ControllerBase
                 var text = result.candidates[0].content?.parts?[0].text;
                 return Ok(new { response = text?.Trim() ?? "No information available." });
             }
-            
+
             return Ok(new { response = "No information available." });
         }
         catch (JsonException jsonEx)

@@ -1,0 +1,40 @@
+@model LoginViewModel
+
+@{
+    ViewData["Title"] = "Login";
+}
+
+<h1>Login</h1>
+
+<form asp-action="Login" method="post">
+    <div asp-validation-summary="All"></div>
+    
+    <div>
+        <label asp-for="Email"></label>
+        <input asp-for="Email" type="email" />
+        <span asp-validation-for="Email"></span>
+    </div>
+    
+    <div>
+        <label asp-for="Password"></label>
+        <input asp-for="Password" type="password" />
+        <span asp-validation-for="Password"></span>
+    </div>
+    
+    <div>
+        <label>
+            <input asp-for="RememberMe" type="checkbox" />
+            @Html.DisplayNameFor(m => m.RememberMe)
+        </label>
+    </div>
+    
+    <div>
+        <button type="submit">Login</button>
+    </div>
+</form>
+
+<div>
+    <p>
+        Don't have an account? <a asp-action="Register">Register here</a>
+    </p>
+</div>

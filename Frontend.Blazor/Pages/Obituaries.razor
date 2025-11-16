@@ -111,11 +111,14 @@
     private string? error;
     private string searchQuery = string.Empty;
 
-    private string apiBase = "https://comp4976assignment1backend.azurewebsites.net";
+    private string apiBase = ""; // Will be set dynamically
 
 
     protected override async Task OnInitializedAsync()
     {
+        // The HttpClient BaseAddress is already configured in Program.cs by Aspire
+        // We just need to use it directly - no need to fetch it here
+        apiBase = ""; // Leave empty to use relative URLs (HttpClient already has BaseAddress)
         await LoadObituariesAsync();
     }
 

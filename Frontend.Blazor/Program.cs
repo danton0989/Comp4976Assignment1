@@ -10,12 +10,18 @@ var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
-// var apiBaseUrl = builder.Configuration["ApiBaseUrl"] ?? "https://comp4976assignment1backend.azurewebsites.net";
+// Get backend URL from Aspire service discovery or configuration
+var apiBaseUrl = builder.Configuration["services:obituaryapi:https:0"] 
+    ?? builder.Configuration["services:obituaryapi:http:0"]
+    ?? builder.Configuration["ApiBaseUrl"]
+    ?? "https://localhost:7223"; // Fallback for standalone development
 
-// Configure HttpClient
+Console.WriteLine($"🔗 Using API base URL: {apiBaseUrl}");
+
+// Configure HttpClient to use backend
 builder.Services.AddScoped(sp => new HttpClient 
 { 
-    BaseAddress = new Uri("https://comp4976assignment1backend.azurewebsites.net") 
+    BaseAddress = new Uri(apiBaseUrl)
 });
 
 builder.Services.AddBlazoredLocalStorage();

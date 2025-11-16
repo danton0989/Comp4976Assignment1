@@ -1,0 +1,53 @@
+@model ObituaryApp.Models.Obituary
+
+@{
+    ViewData["Title"] = "Obituary Details";
+}
+
+<h1>Obituary Details</h1>
+
+<div>
+    <h2>@Model.FullName</h2>
+    
+    @if (!string.IsNullOrEmpty(Model.PhotoUrl))
+    {
+        <p>
+            <img src="@Model.PhotoUrl" alt="Photo" width="200" />
+        </p>
+    }
+    
+    <p>
+        <strong>Date of Birth:</strong> @Model.DateOfBirth.ToLongDateString()
+    </p>
+    
+    <p>
+        <strong>Date of Death:</strong> @Model.DateOfDeath.ToLongDateString()
+    </p>
+    
+    <p>
+        <strong>Biography:</strong><br />
+        @Model.Biography
+    </p>
+    
+    <p>
+        <strong>Created:</strong> @Model.CreatedAt.ToString("g")
+    </p>
+    
+    @if (Model.UpdatedAt.HasValue)
+    {
+        <p>
+            <strong>Last Updated:</strong> @Model.UpdatedAt.Value.ToString("g")
+        </p>
+    }
+</div>
+
+<div>
+    @if (User.Identity?.IsAuthenticated == true && (Model.CreatorId == User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value || User.IsInRole("admin")))
+    {
+        <a asp-action="Edit" asp-route-id="@Model.Id">Edit</a>
+        <text> | </text>
+        <a asp-action="Delete" asp-route-id="@Model.Id">Delete</a>
+        <text> | </text>
+    }
+    <a asp-action="Index">Back to List</a>
+</div>

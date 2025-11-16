@@ -111,7 +111,7 @@
     private bool submitting = false;
     private string? error;
     private string currentPhotoUrl = string.Empty;
-    private string apiBase = "https://comp4976assignment1backend.azurewebsites.net";
+    private string apiBase = ""; // Will be set dynamically
 
 
     protected override async Task OnInitializedAsync()
@@ -122,6 +122,8 @@
             return;
         }
 
+        // Get the backend URL from the navigation
+        apiBase = Navigation.ToAbsoluteUri("/").ToString().TrimEnd('/');
         await LoadObituaryAsync();
     }
     private string computedPhotoUrl = string.Empty;

@@ -1,0 +1,63 @@
+@model ObituaryApp.Models.Obituary
+
+@{
+    ViewData["Title"] = "Edit Obituary";
+}
+
+<h1>Edit Obituary</h1>
+
+<form asp-action="Edit" method="post" enctype="multipart/form-data">
+    <input type="hidden" asp-for="Id" />
+    <div asp-validation-summary="All"></div>
+    
+    <div>
+        <label asp-for="FullName">Full Name:</label><br />
+        <input asp-for="FullName" style="width: 300px;" />
+        <span asp-validation-for="FullName"></span>
+    </div>
+    <br />
+    
+    <div>
+        <label asp-for="DateOfBirth">Date of Birth:</label><br />
+        <input asp-for="DateOfBirth" type="date" />
+        <span asp-validation-for="DateOfBirth"></span>
+    </div>
+    <br />
+    
+    <div>
+        <label asp-for="DateOfDeath">Date of Death:</label><br />
+        <input asp-for="DateOfDeath" type="date" />
+        <span asp-validation-for="DateOfDeath"></span>
+    </div>
+    <br />
+    
+    <div>
+        <label asp-for="Biography">Biography:</label><br />
+        <textarea asp-for="Biography" rows="10" cols="50"></textarea>
+        <span asp-validation-for="Biography"></span>
+    </div>
+    <br />
+    
+    @if (!string.IsNullOrEmpty(Model.PhotoUrl))
+    {
+        <div>
+            <p>Current Photo:</p>
+            <img src="@Model.PhotoUrl" alt="Current photo" width="100" />
+        </div>
+        <br />
+    }
+    
+    <div>
+        <label for="photo">Change Photo (optional):</label><br />
+        <input type="file" name="photo" accept="image/*" />
+    </div>
+    <br />
+    
+    <div>
+        <button type="submit">Save Changes</button>
+    </div>
+</form>
+<br />
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>

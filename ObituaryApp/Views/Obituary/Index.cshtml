@@ -1,0 +1,90 @@
+@model IEnumerable<ObituaryApp.Models.Obituary>
+
+@{
+    ViewData["Title"] = "Obituaries";
+}
+
+<h1>Obituaries</h1>
+
+@if (User.Identity?.IsAuthenticated == true)
+{
+    <p>
+        <a asp-action="Create" class="btn">➕ Create New Obituary</a>
+    </p>
+}
+
+<form asp-action="Index" method="get" class="search-form">
+    <input type="text" name="search" value="@ViewData["Search"]" placeholder="Search by name..." />
+    <button type="submit">🔍 Search</button>
+    @if (!string.IsNullOrEmpty(ViewData["Search"]?.ToString()))
+    {
+        <a asp-action="Index" class="btn">Clear</a>
+    }
+</form>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">
+        No obituaries found. @(string.IsNullOrEmpty(ViewData["Search"]?.ToString()) ? "Be the first to create one!" : "Try a different search term.")
+    </div>
+}
+else
+{
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Date of Birth</th>
+                <th>Date of Death</th>
+                <th>Photo</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td><strong>@item.FullName</strong></td>
+                    <td>@item.DateOfBirth.ToString("MMM d, yyyy")</td>
+                    <td>@item.DateOfDeath.ToString("MMM d, yyyy")</td>
+                    <td>
+                        @if (!string.IsNullOrEmpty(item.PhotoUrl))
+                        {
+                            <img src="@item.PhotoUrl" alt="Photo" width="50" height="50" style="object-fit: cover;" />
+                        }
+                        else
+                        {
+                            <span style="color: #999;">No photo</span>
+                        }
+                    </td>
+                    <td>
+                        <a asp-action="Details" asp-route-id="@item.Id">View</a>
+                        @if (User.Identity?.IsAuthenticated == true && (item.CreatorId == User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value || User.IsInRole("admin")))
+                        {
+                            <text> | </text>
+                            <a asp-action="Edit" asp-route-id="@item.Id">Edit</a>
+                            <text> | </text>
+                            <a asp-action="Delete" asp-route-id="@item.Id" style="color: #e74c3c;">Delete</a>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@if (Model.Any())
+{
+    var currentPage = (int)(ViewData["Page"] ?? 1);
+    <div class="pagination">
+        @if (currentPage > 1)
+        {
+            <a asp-action="Index" asp-route-page="@(currentPage - 1)" asp-route-search="@ViewData["Search"]" class="btn">← Previous</a>
+        }
+        <span>Page @currentPage</span>
+        @if (Model.Count() == 20)
+        {
+            <a asp-action="Index" asp-route-page="@(currentPage + 1)" asp-route-search="@ViewData["Search"]" class="btn">Next →</a>
+        }
+    </div>
+}

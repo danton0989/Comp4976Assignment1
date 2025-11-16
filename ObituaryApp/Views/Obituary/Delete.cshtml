@@ -1,0 +1,39 @@
+@model ObituaryApp.Models.Obituary
+
+@{
+    ViewData["Title"] = "Delete Obituary";
+}
+
+<h1>Delete Obituary</h1>
+
+<h2>Are you sure you want to delete this obituary?</h2>
+
+<div>
+    <h3>@Model.FullName</h3>
+    
+    @if (!string.IsNullOrEmpty(Model.PhotoUrl))
+    {
+        <p>
+            <img src="@Model.PhotoUrl" alt="Photo" width="100" />
+        </p>
+    }
+    
+    <p>
+        <strong>Date of Birth:</strong> @Model.DateOfBirth.ToLongDateString()
+    </p>
+    
+    <p>
+        <strong>Date of Death:</strong> @Model.DateOfDeath.ToLongDateString()
+    </p>
+    
+    <p>
+        <strong>Biography:</strong><br />
+        @Model.Biography
+    </p>
+</div>
+
+<form asp-action="Delete" method="post">
+    <input type="hidden" asp-for="Id" />
+    <button type="submit">Delete</button> |
+    <a asp-action="Index">Cancel</a>
+</form>

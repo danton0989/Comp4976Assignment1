@@ -25,6 +25,7 @@ try
     });
 
     Console.WriteLine("=== ADDING CONTROLLERS ===");
+    builder.Services.AddControllersWithViews();
     builder.Services.AddControllers();
     builder.Services.AddEndpointsApiExplorer();
 
@@ -79,9 +80,27 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     }));
 
     Console.WriteLine("=== CONFIGURING IDENTITY ===");
-    builder.Services.AddIdentity<IdentityUser, IdentityRole>()
+    builder.Services.AddIdentity<IdentityUser, IdentityRole>(options =>
+    {
+        // Configure password requirements
+        options.Password.RequireDigit = true;
+        options.Password.RequiredLength = 6;
+        options.Password.RequireNonAlphanumeric = false;
+        options.Password.RequireUppercase = false;
+        options.Password.RequireLowercase = false;
+    })
         .AddEntityFrameworkStores<ApplicationDbContext>()
         .AddDefaultTokenProviders();
+
+    // Configure application cookie for MVC
+    builder.Services.ConfigureApplicationCookie(options =>
+    {
+        options.LoginPath = "/Account/Login";
+        options.LogoutPath = "/Account/Logout";
+        options.AccessDeniedPath = "/Account/AccessDenied";
+        options.ExpireTimeSpan = TimeSpan.FromHours(24);
+        options.SlidingExpiration = true;
+    });
 
     Console.WriteLine("=== REGISTERING SERVICES ===");
     builder.Services.AddScoped<IObituaryService, ObituaryService>();
@@ -101,10 +120,13 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
         throw new InvalidOperationException("Jwt:Key is not configured in appsettings.json");
     }
 
+    // Configure authentication with BOTH Cookie (for MVC) and JWT (for API)
     builder.Services.AddAuthentication(options =>
     {
-        options.DefaultAuthenticateScheme = "Bearer";
-        options.DefaultChallengeScheme = "Bearer";
+        // Use cookies as default for MVC controllers
+        options.DefaultAuthenticateScheme = IdentityConstants.ApplicationScheme;
+        options.DefaultChallengeScheme = IdentityConstants.ApplicationScheme;
+        options.DefaultSignInScheme = IdentityConstants.ApplicationScheme;
     })
     .AddJwtBearer(options =>
     {
@@ -196,6 +218,12 @@ Console.WriteLine("=== CONFIGURING MIDDLEWARE ===");
     app.UseAuthentication();
     app.UseAuthorization();
 
+    // Map MVC routes first
+    app.MapControllerRoute(
+        name: "default",
+        pattern: "{controller=Obituary}/{action=Index}/{id?}");
+    
+    // Then map API controllers
     app.MapControllers();
 
     Console.WriteLine("=== STARTING APP ===");

@@ -69,7 +69,7 @@
                                 <div class="mb-3">
                                     <label class="form-label">Current Photo</label>
                                     <div>
-                                        <img src="@currentPhotoUrl" alt="Current photo" class="img-thumbnail" style="max-height: 200px;" />
+                                        <img src="@($"{apiBase}{currentPhotoUrl}")" class="card-img-top obituary-photo" />
                                     </div>
                                     <small class="form-text text-muted">Note: Photo cannot be changed when editing</small>
                                 </div>
@@ -110,7 +110,9 @@
     private bool loading = true;
     private bool submitting = false;
     private string? error;
-    private string? currentPhotoUrl;
+    private string currentPhotoUrl = string.Empty;
+    private string apiBase = "https://comp4976assignment1backend.azurewebsites.net";
+
 
     protected override async Task OnInitializedAsync()
     {
@@ -122,6 +124,7 @@
 
         await LoadObituaryAsync();
     }
+    private string computedPhotoUrl = string.Empty;
 
     private async Task LoadObituaryAsync()
     {
@@ -131,11 +134,24 @@
         try
         {
             var obituary = await ObituaryService.GetAsync(Id);
-            
+            Console.WriteLine($"Loaded obituary: {obituary?.PhotoUrl}");
             if (obituary == null)
             {
                 error = "Obituary not found.";
                 return;
+            }
+
+            // store raw relative path
+            currentPhotoUrl = obituary.PhotoUrl;
+
+            // compute full URL (ensure apiBase has no trailing slash)
+            if (!string.IsNullOrEmpty(currentPhotoUrl))
+            {
+                computedPhotoUrl = $"{apiBase}{currentPhotoUrl}";
+            }
+            else
+            {
+                computedPhotoUrl = string.Empty;
             }
 
             model = new ObituaryUpdateDto
@@ -143,10 +159,9 @@
                 FullName = obituary.FullName,
                 DateOfBirth = obituary.DateOfBirth,
                 DateOfDeath = obituary.DateOfDeath,
-                Biography = obituary.Biography
+                Biography = obituary.Biography,
+                PhotoUrl = obituary.PhotoUrl
             };
-
-            currentPhotoUrl = obituary.PhotoUrl;
         }
         catch (Exception ex)
         {
@@ -158,6 +173,7 @@
         }
     }
 
+
     private async Task HandleSubmit()
     {
         if (model == null) return;
@@ -168,7 +184,7 @@
         try
         {
             var success = await ObituaryService.UpdateAsync(Id, model);
-            
+
             if (success)
             {
                 Navigation.NavigateTo($"/obituaries/{Id}");

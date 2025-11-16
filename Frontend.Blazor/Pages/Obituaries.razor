@@ -57,7 +57,7 @@
                     <div class="card h-100 shadow-sm obituary-card" @onclick="() => ViewDetails(obit.Id)">
                         @if (!string.IsNullOrEmpty(obit.PhotoUrl))
                         {
-                            <img src="@obit.PhotoUrl" class="card-img-top obituary-photo" alt="@obit.FullName" />
+                            <img src="@($"{apiBase}{obit.PhotoUrl}")" class="card-img-top obituary-photo" />
                         }
                         else
                         {
@@ -110,6 +110,9 @@
     private bool loading = true;
     private string? error;
     private string searchQuery = string.Empty;
+
+    private string apiBase = "https://comp4976assignment1backend.azurewebsites.net";
+
 
     protected override async Task OnInitializedAsync()
     {

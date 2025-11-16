@@ -6,4 +6,5 @@ public class ObituaryUpdateDto
     public DateTime DateOfBirth { get; set; }
     public DateTime DateOfDeath { get; set; }
     public string Biography { get; set; } = string.Empty;
+    public string? PhotoUrl { get; set; }
 }

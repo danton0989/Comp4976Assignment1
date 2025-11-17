@@ -1,6 +1,7 @@
 @page "/obituaries"
 @inject ObituaryService ObituaryService
 @inject NavigationManager Navigation
+@inject HttpClient HttpClient
 @using Frontend.Blazor.Services
 @using Frontend.Blazor.Models
 
@@ -13,8 +14,8 @@
 
     <div class="mb-4">
         <div class="input-group">
-            <input type="text" class="form-control" placeholder="Search by name..." 
-                   @bind="searchQuery" @bind:event="oninput" />
+            <input type="text" class="form-control" placeholder="Search by name..." @bind="searchQuery"
+                @bind:event="oninput" />
             <button class="btn btn-primary" @onclick="SearchAsync">
                 <i class="bi bi-search"></i> Search
             </button>
@@ -61,7 +62,8 @@
                         }
                         else
                         {
-                            <div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height: 200px;">
+                            <div class="card-img-top bg-light d-flex align-items-center justify-content-center"
+                                style="height: 200px;">
                                 <i class="bi bi-person-circle fs-1 text-muted"></i>
                             </div>
                         }
@@ -111,14 +113,13 @@
     private string? error;
     private string searchQuery = string.Empty;
 
-    private string apiBase = ""; // Will be set dynamically
+    private string apiBase = ""; // Will be set from HttpClient BaseAddress
 
 
     protected override async Task OnInitializedAsync()
     {
-        // The HttpClient BaseAddress is already configured in Program.cs by Aspire
-        // We just need to use it directly - no need to fetch it here
-        apiBase = ""; // Leave empty to use relative URLs (HttpClient already has BaseAddress)
+        // Get the backend URL from HttpClient's BaseAddress
+        apiBase = HttpClient.BaseAddress?.ToString().TrimEnd('/') ?? "";
         await LoadObituariesAsync();
     }
 

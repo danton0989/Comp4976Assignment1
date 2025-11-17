@@ -24,7 +24,7 @@ public class ObituaryService
 
     public async Task<List<Obituary>?> GetAllAsync(string? search = null)
     {
-        var url = "api/Obituaries"; // Capital O
+        var url = "api/Obituaries";
         if (!string.IsNullOrWhiteSpace(search))
             url += $"?search={Uri.EscapeDataString(search)}";
 
@@ -33,7 +33,7 @@ public class ObituaryService
 
     public async Task<Obituary?> GetAsync(int id)
     {
-        return await _http.GetFromJsonAsync<Obituary>($"api/obituaries/{id}");
+        return await _http.GetFromJsonAsync<Obituary>($"api/Obituaries/{id}");
     }
 
     public async Task<bool> CreateAsync(ObituaryCreateDto dto)
@@ -49,21 +49,21 @@ public class ObituaryService
         if (dto.PhotoFile != null)
             form.Add(new StreamContent(dto.PhotoFile.OpenReadStream(5_000_000)), "Photo", dto.PhotoFile.Name);
 
-        var res = await _http.PostAsync("api/obituaries", form);
+        var res = await _http.PostAsync("api/Obituaries", form);
         return res.IsSuccessStatusCode;
     }
 
     public async Task<bool> UpdateAsync(int id, ObituaryUpdateDto dto)
     {
         await SetAuthHeaderAsync();
-        var res = await _http.PutAsJsonAsync($"api/obituaries/{id}", dto);
+        var res = await _http.PutAsJsonAsync($"api/Obituaries/{id}", dto);
         return res.IsSuccessStatusCode;
     }
 
     public async Task<bool> DeleteAsync(int id)
     {
         await SetAuthHeaderAsync();
-        var res = await _http.DeleteAsync($"api/obituaries/{id}");
+        var res = await _http.DeleteAsync($"api/Obituaries/{id}");
         return res.IsSuccessStatusCode;
     }
 }

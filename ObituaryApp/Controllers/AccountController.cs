@@ -34,7 +34,7 @@ public class AccountController : Controller
         if (ModelState.IsValid)
         {
             var result = await _signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, lockoutOnFailure: false);
-            
+
             if (result.Succeeded)
             {
                 if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
@@ -43,7 +43,7 @@ public class AccountController : Controller
                 }
                 return RedirectToAction("Index", "Obituary");
             }
-            
+
             ModelState.AddModelError(string.Empty, "Invalid login attempt.");
         }
 
@@ -70,18 +70,18 @@ public class AccountController : Controller
         {
             var user = new IdentityUser { UserName = model.Email, Email = model.Email };
             var result = await _userManager.CreateAsync(user, model.Password);
-            
+
             if (result.Succeeded)
             {
                 await _signInManager.SignInAsync(user, isPersistent: false);
-                
+
                 if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
                 {
                     return Redirect(returnUrl);
                 }
                 return RedirectToAction("Index", "Obituary");
             }
-            
+
             foreach (var error in result.Errors)
             {
                 ModelState.AddModelError(string.Empty, error.Description);

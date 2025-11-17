@@ -2,6 +2,7 @@
 @inject ObituaryService ObituaryService
 @inject NavigationManager Navigation
 @inject AuthState AuthState
+@inject HttpClient HttpClient
 @using Frontend.Blazor.Services
 @using Frontend.Blazor.Models
 
@@ -124,13 +125,13 @@
     private bool showDeleteModal = false;
     private bool deleting = false;
 
-    private string apiBase = ""; // Will be set dynamically
+    private string apiBase = ""; // Will be set from HttpClient BaseAddress
 
 
     protected override async Task OnInitializedAsync()
     {
-        // Get the backend URL from the navigation
-        apiBase = Navigation.ToAbsoluteUri("/").ToString().TrimEnd('/');
+        // Get the backend URL from HttpClient's BaseAddress
+        apiBase = HttpClient.BaseAddress?.ToString().TrimEnd('/') ?? "";
         await LoadObituaryAsync();
     }
 

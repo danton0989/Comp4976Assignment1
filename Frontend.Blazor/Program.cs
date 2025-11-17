@@ -11,17 +11,20 @@ builder.RootComponents.Add<App>("#app");
 builder.RootComponents.Add<HeadOutlet>("head::after");
 
 // Get backend URL from Aspire service discovery or configuration
-var apiBaseUrl = builder.Configuration["services:obituaryapi:https:0"] 
+var apiBaseUrl = builder.Configuration["services:obituaryapi:https:0"]
     ?? builder.Configuration["services:obituaryapi:http:0"]
     ?? builder.Configuration["ApiBaseUrl"]
     ?? "https://localhost:7223"; // Fallback for standalone development
 
+// Ensure no trailing slash
+apiBaseUrl = apiBaseUrl.TrimEnd('/');
+
 Console.WriteLine($"🔗 Using API base URL: {apiBaseUrl}");
 
 // Configure HttpClient to use backend
-builder.Services.AddScoped(sp => new HttpClient 
-{ 
-    BaseAddress = new Uri(apiBaseUrl)
+builder.Services.AddScoped(sp => new HttpClient
+{
+    BaseAddress = new Uri(apiBaseUrl + "/") // Add trailing slash for proper relative URL resolution
 });
 
 builder.Services.AddBlazoredLocalStorage();

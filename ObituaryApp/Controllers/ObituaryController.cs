@@ -69,7 +69,7 @@ public class ObituaryController : Controller
                 }
                 var fileName = $"{Guid.NewGuid()}{Path.GetExtension(photo.FileName)}";
                 var filePath = Path.Combine(uploads, fileName);
-                
+
                 using (var stream = System.IO.File.Create(filePath))
                 {
                     await photo.CopyToAsync(stream);
@@ -157,7 +157,7 @@ public class ObituaryController : Controller
                 }
                 var fileName = $"{Guid.NewGuid()}{Path.GetExtension(photo.FileName)}";
                 var filePath = Path.Combine(uploads, fileName);
-                
+
                 using (var stream = System.IO.File.Create(filePath))
                 {
                     await photo.CopyToAsync(stream);

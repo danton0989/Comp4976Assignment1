@@ -9,6 +9,7 @@ namespace ObituaryApp.Controllers.Api;
 
 [Route("api/[controller]")]
 [ApiController]
+[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 public class ObituariesController : ControllerBase
 {
     private readonly IObituaryService _service;
@@ -19,6 +20,7 @@ public class ObituariesController : ControllerBase
     }
 
     [HttpGet]
+    [AllowAnonymous]
     public async Task<IActionResult> GetAll([FromQuery] int page = 1, [FromQuery] int pageSize = 20, [FromQuery] string? search = null)
     {
         var list = await _service.GetAllAsync(page, pageSize, search);
@@ -26,6 +28,7 @@ public class ObituariesController : ControllerBase
     }
 
     [HttpGet("{id}")]
+    [AllowAnonymous]
     public async Task<IActionResult> Get(int id)
     {
         var item = await _service.GetByIdAsync(id);
@@ -34,7 +37,6 @@ public class ObituariesController : ControllerBase
     }
 
     [HttpPost]
-    [Authorize]
     public async Task<IActionResult> Create([FromForm] ObituaryCreateForm dto)
     {
         var userId = User?.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? User?.Identity?.Name ?? string.Empty;
@@ -65,8 +67,8 @@ public class ObituariesController : ControllerBase
         var ob = new Obituary
         {
             FullName = dto.FullName,
-            DateOfBirth = dto.DateOfBirth,
-            DateOfDeath = dto.DateOfDeath,
+            DateOfBirth = DateOnly.FromDateTime(dto.DateOfBirth),
+            DateOfDeath = DateOnly.FromDateTime(dto.DateOfDeath),
             Biography = dto.Biography,
             CreatorId = userId ?? string.Empty,
             CreatedAt = DateTime.UtcNow,
@@ -116,7 +118,6 @@ public class ObituariesController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    [Authorize]
     public async Task<IActionResult> Update(int id, [FromBody] ObituaryUpdateDto dto)
     {
         var existing = await _service.GetByIdAsync(id);
@@ -129,8 +130,8 @@ public class ObituariesController : ControllerBase
             return Forbid();
 
         existing.FullName = dto.FullName;
-        existing.DateOfBirth = dto.DateOfBirth;
-        existing.DateOfDeath = dto.DateOfDeath;
+        existing.DateOfBirth = DateOnly.FromDateTime(dto.DateOfBirth);
+        existing.DateOfDeath = DateOnly.FromDateTime(dto.DateOfDeath);
         existing.Biography = dto.Biography;
         // if photo changed, consider deleting old file (service will handle physical removal if needed)
         if (!string.Equals(existing.PhotoUrl, dto.PhotoUrl, StringComparison.OrdinalIgnoreCase))
@@ -153,7 +154,6 @@ public class ObituariesController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    [Authorize]
     public async Task<IActionResult> Delete(int id)
     {
         var existing = await _service.GetByIdAsync(id);
